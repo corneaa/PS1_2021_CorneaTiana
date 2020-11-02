@@ -1,0 +1,54 @@
+#include <LiquidCrystal.h>
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+int Pin;
+float temperatura_citita_senzor;
+float output;
+double kp = 1, ki = 0.1, kd = 0.1; // exemplu valori
+double eroare= 0;
+double suma_erori= 0;
+double eroare_anterioara = 0;
+double derivativa = 0;
+double dt = 0.25 ; // timp esantionare
+double setpoint = 30;
+
+void setup()
+{
+  Serial.begin(9600);
+  lcd.begin(16,2); // setup LCD 16 coloane, 2 linii
+  lcd.setCursor(0,0);
+  delay(2000);
+}
+
+int get_temperature(int pin) 
+{
+	int temperature = analogRead(A0);
+	float voltage = temperature * 5.0;
+	voltage = voltage / 1024.0;
+	return ((voltage - 0.5) * 100);
+}
+
+void loop()
+{
+	temperatura_citita_senzor = get_temperature(A0);
+  
+  eroare = setpoint - temperatura_citita_senzor;
+  suma_erori= suma_erori + eroare * dt;
+  derivativa = (eroare - eroare_anterioara) / dt;
+  output = (kp * eroare) + (ki * suma_erori ) + (kd * derivativa);
+  eroare_anterioara = eroare;
+  
+  lcd.setCursor(0,0);
+	lcd.print("TEMP = ");
+	lcd.print(temperatura_citita_senzor);
+  lcd.print(" C");
+  
+  lcd.setCursor(0,1);
+	lcd.print("PID = ");
+	lcd.print(output);
+  
+  delay(1000);
+  
+  lcd.clear();
+  
+  }
